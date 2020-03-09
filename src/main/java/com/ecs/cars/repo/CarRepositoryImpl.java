@@ -15,7 +15,7 @@ public class CarRepositoryImpl implements CarRepository {
 
     @Override
     public Optional<Car> getCar(UUID id) {
-        return Optional.of(carMap.get(id));
+        return Optional.ofNullable(carMap.get(id));
     }
 
     @Override
@@ -28,9 +28,8 @@ public class CarRepositoryImpl implements CarRepository {
 
     @Override
     public Optional<Car> updateCar(Car car) {
-        final Car existingCar = getCar(car, car.getId());
-        carMap.put(car.getId(), existingCar);
-        return Optional.of(existingCar);
+        carMap.put(car.getId(), car);
+        return Optional.of(car);
     }
 
     private Car getCar(Car car, UUID id) {

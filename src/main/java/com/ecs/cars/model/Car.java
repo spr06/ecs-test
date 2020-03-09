@@ -1,10 +1,8 @@
 package com.ecs.cars.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
@@ -16,12 +14,15 @@ public class Car {
 
     private UUID id;
 
-    @NotNull
+    @NotEmpty
     private String make;
-    @NotNull
+
+    @NotEmpty
     private String model;
-    @NotNull
+
+    @NotEmpty
     private String colour;
+
     @NotNull
     private Integer year;
 }
