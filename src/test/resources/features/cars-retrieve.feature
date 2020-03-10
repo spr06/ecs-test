@@ -1,16 +1,14 @@
- Feature: As a consumer of a RESTFul API, I would like to be able to get cars
+Feature: As a consumer of a RESTFul API, I would like to be able to get cars
 
-  Scenario: Able to add cars with valid details
-    Given  I have valid car details
-    When I use add api
-    Then car is added
+  Scenario: I am able to retrieve existing car
+    Given  I have a valid car tesla model x colour grey 2010
+    When I use retrieve api to get it
+    Then car is retrieved correctly
     And I receive response code 200
 
   Scenario: Not able to add cars with invalid details
-    Given  I have invalid car details
-    When I use add api
-    Then illegal argument exception is received
-    And I receive response code 400
+    When I use retrieve api to get a car with a non existent uuid
+    Then notFound status code is received
 
 
 

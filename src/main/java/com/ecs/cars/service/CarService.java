@@ -27,7 +27,7 @@ public class CarService {
         } else if (carExists(car.getId())) {
             return carRepository.updateCar(car);
         }
-        throw new NotFoundException("Invalid car key");
+        throw new NotFoundException("Car does not exist");
     }
 
     private boolean carExists(UUID id) {
@@ -38,7 +38,7 @@ public class CarService {
         if (carExists(id)) {
             carRepository.deleteCar(id);
         }
-        throw new IllegalArgumentException("Invalid car key");
+        throw new NotFoundException("Car does not exist");
     }
 
 }

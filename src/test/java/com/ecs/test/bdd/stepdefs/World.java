@@ -15,8 +15,9 @@ import java.util.UUID;
 public class World {
 
     private UUID carId;
-    private Car inputCar;
+    private Car existingCar;
     private ResponseEntity<Car> response;
+    private ResponseEntity<String> responseString;
     private HttpStatus errorStatus;
 
 }

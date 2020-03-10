@@ -18,8 +18,8 @@ public class CarsController {
 
     private final CarService carService;
 
-    @GetMapping("/get-car")
-    public ResponseEntity<Car> getCar(@NotNull @RequestParam(value = "id") UUID id) {
+    @GetMapping("/get-car/{id}")
+    public ResponseEntity<Car> getCar(@NotNull @PathVariable("id") UUID id) {
         return ResponseEntity.of(carService.getCar(id));
     }
 
@@ -28,8 +28,8 @@ public class CarsController {
         return ResponseEntity.of(carService.createOrUpdateCar(car));
     }
 
-    @DeleteMapping("/delete-car")
-    public void deleteCar(@NotNull @RequestParam(value = "id") UUID id) throws NotFoundException {
+    @DeleteMapping("/delete-car/{id}")
+    public void deleteCar(@NotNull @PathVariable("id") UUID id) {
         carService.deleteCar(id);
     }
 }

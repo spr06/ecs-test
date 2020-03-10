@@ -15,6 +15,5 @@ public class TestContextConfiguration {
 
     @Before
     public void setUp() {
-        log.info("-------------- Spring Context Initialized For Executing Cucumber Tests --------------");
     }
 }

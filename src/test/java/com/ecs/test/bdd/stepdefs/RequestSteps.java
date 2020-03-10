@@ -35,29 +35,36 @@ public class RequestSteps {
     private final RestTemplate restTemplate = new RestTemplate();
 
     private final String SERVER_URL = "http://localhost";
+
     private final String CREATE_CAR_ENDPOINT = "/v1/create-car";
+    private final String GET_CAR_ENDPOINT = "/v1/get-car";
+    private final String DELETE_CAR_ENDPOINT = "/v1/delete-car";
 
     @Given("^I have car details with (.+), (.+), (.+), (\\d+)$")
     public void validCar(String make, String model, String color, Integer year) {
-        world.setInputCar(new Car(null, make, model, color, year));
+        world.setExistingCar(new Car(null, make, model, color, year));
     }
 
     @When("^I use add api to add the car$")
     public void addCar() {
-        createOrUpdate(world.getInputCar());
+        createOrUpdate(world.getExistingCar());
     }
 
     @Then("^car is added$")
     public void carAdded() {
         final Car carAdded = world.getResponse().getBody();
 
-        final Car inputCar = world.getInputCar();
+        final Car inputCar = world.getExistingCar();
 
-        assertThat(carAdded.getId(), is(notNullValue()));
-        assertThat(carAdded.getColour(), equalTo((inputCar.getColour())));
-        assertThat(carAdded.getMake(), equalTo((inputCar.getMake())));
-        assertThat(carAdded.getYear(), equalTo((inputCar.getYear())));
-        assertThat(carAdded.getModel(), equalTo((inputCar.getModel())));
+        assertCar(carAdded, inputCar);
+    }
+
+    private void assertCar(Car carFetchedByApi, Car inputCar) {
+        assertThat(carFetchedByApi.getId(), is(notNullValue()));
+        assertThat(carFetchedByApi.getColour(), equalTo((inputCar.getColour())));
+        assertThat(carFetchedByApi.getMake(), equalTo((inputCar.getMake())));
+        assertThat(carFetchedByApi.getYear(), equalTo((inputCar.getYear())));
+        assertThat(carFetchedByApi.getModel(), equalTo((inputCar.getModel())));
     }
 
     @Then("^I receive response code (\\d+)$")
@@ -70,23 +77,6 @@ public class RequestSteps {
         assertThat(world.getErrorStatus(), equalTo(HttpStatus.NOT_FOUND));
     }
 
-    private void createOrUpdate(Car validCar) {
-        try {
-            final ResponseEntity<Car> carResponseEntity = this.post(validCar);
-            world.setResponse(carResponseEntity);
-        } catch (HttpClientErrorException e){
-            world.setErrorStatus(HttpStatus.valueOf(e.getRawStatusCode()));
-        }
-    }
-
-    private String apiEndpoint() {
-        return SERVER_URL + ":" + port + CREATE_CAR_ENDPOINT;
-    }
-
-    private ResponseEntity<Car> post(final Car car) {
-        return restTemplate.postForEntity(apiEndpoint(), car, Car.class);
-    }
-
     @Given("I have a valid car tesla model x colour grey 2010")
     public void iHaveValidCarDetailsOfTeslaModelXColourGrey() {
         createOrUpdate(new Car(null, "Tesla", "modelX", "grey", 2010));
@@ -95,7 +85,7 @@ public class RequestSteps {
     @When("I use add api to update it to tesla model x colour black 2010")
     public void iUseAddApiToUpdateItToTeslaModelXColourBlack() {
         final Car existingCar = world.getResponse().getBody();
-        world.setInputCar(existingCar);
+        world.setExistingCar(existingCar);
         createOrUpdate(new Car(existingCar.getId(), existingCar.getMake(), existingCar.getModel(), "Black", existingCar.getYear()));
     }
 
@@ -108,4 +98,85 @@ public class RequestSteps {
     public void iUseAddApiToUpdateARandomNonExistentCar() {
         createOrUpdate(new Car(UUID.randomUUID(), "tesla", "Y", "red", 2000));
     }
+
+    @Then("car is retrieved correctly")
+    public void carIsRetrievedCorrectly() {
+        assertCar(world.getResponse().getBody(), world.getExistingCar());
+    }
+
+    @When("I use retrieve api to get it")
+    public void iUseRetrieveApiToGetIt() {
+        setExistingCar();
+
+        get(world.getExistingCar().getId());
+    }
+
+    @When("I use retrieve api to get a car with a non existent uuid")
+    public void iUseRetrieveApiToGetACarWithANonExistentUuid() {
+        get(UUID.randomUUID());
+    }
+
+    @When("I use delete api to delete the car")
+    public void iUseDeleteApiToDeleteTheCar() {
+        setExistingCar();
+        delete(world.getExistingCar().getId());
+    }
+
+    @When("I use delete api to delete non existant car")
+    public void iUseDeleteApiToDeleteNonExistantCar() {
+        delete(UUID.randomUUID());
+    }
+
+    private void setExistingCar() {
+        final Car existingCar = world.getResponse().getBody();
+        world.setExistingCar(existingCar);
+    }
+
+    private void createOrUpdate(Car validCar) {
+        try {
+            final ResponseEntity<Car> carResponseEntity = this.post(validCar);
+            world.setResponse(carResponseEntity);
+        } catch (HttpClientErrorException e){
+            world.setErrorStatus(HttpStatus.valueOf(e.getRawStatusCode()));
+        }
+    }
+
+    private String apiPostEndpoint() {
+        return SERVER_URL + ":" + port + CREATE_CAR_ENDPOINT;
+    }
+
+    private String apiGetEndpoint(UUID uuid) {
+        return SERVER_URL + ":" + port + GET_CAR_ENDPOINT + "/" + uuid.toString();
+    }
+
+    private String apiDeleteEndpoint(UUID uuid) {
+        return SERVER_URL + ":" + port + DELETE_CAR_ENDPOINT + "/" + uuid.toString();
+    }
+
+    private ResponseEntity<Car> post(final Car car) {
+        return restTemplate.postForEntity(apiPostEndpoint(), car, Car.class);
+    }
+
+    private ResponseEntity<Car> get(final UUID uuid) {
+        try {
+            final ResponseEntity<Car> forEntity = restTemplate.getForEntity(apiGetEndpoint(uuid), Car.class);
+            world.setResponse(forEntity);
+            return forEntity;
+        } catch (HttpClientErrorException e){
+            world.setErrorStatus(HttpStatus.valueOf(e.getRawStatusCode()));
+        }
+        return null;
+    }
+
+    private ResponseEntity<String> delete(final UUID uuid) {
+        try{
+            final ResponseEntity<String> responseEntity = restTemplate.exchange(apiDeleteEndpoint(uuid), HttpMethod.DELETE, new HttpEntity<>(HttpHeaders.ACCEPT), String.class);
+            world.setResponseString(responseEntity);
+            return responseEntity;
+        }  catch (HttpClientErrorException e){
+            world.setErrorStatus(HttpStatus.valueOf(e.getRawStatusCode()));
+        }
+        return null;
+    }
+
 }
